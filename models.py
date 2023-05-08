@@ -2,7 +2,7 @@ from sqlalchemy.dialects.postgresql import UUID
 import uuid, os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
-from sqlalchemy import create_engine, Column, Integer, String, Boolean, text
+from sqlalchemy import create_engine, Column, Integer, String, Boolean
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -36,6 +36,19 @@ class Product(Base):
     sale = Column(Boolean, default=False)
 
     __tablename__ = "product"
+
+
+class User(Base):
+    """
+    """
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    first_name = Column(String)
+    last_name = Column(String)
+    email = Column(String, unique=True)
+    password = Column(String)
+
+    __tablename__ = "users"
+
 
 
 Base.metadata.create_all(bind=engine)
