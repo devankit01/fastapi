@@ -1,9 +1,13 @@
 from fastapi import Response, status, HTTPException, Depends, APIRouter
 from sqlalchemy.orm import Session
-from models import get_db
+from app.models import get_db
 from typing import List
-from schema.product import ProductReadSchema, ProductSchema, ProductUpdate
-from models import Product
+from .schemas import ProductReadSchema, ProductSchema, ProductUpdate
+from app.models import Product
+from fastapi import FastAPI, File, UploadFile
+from ...utils.s3 import s3_client
+from ...utils.jwt import authenticate_user
+from datetime import date
 import uuid
 
 router = APIRouter()
@@ -15,7 +19,7 @@ class ProductView:
     """
 
     @router.get("/products", response_model=List[ProductReadSchema])
-    async def get_products(db: Session = Depends(get_db), search: str = "", ):
+    async def get_products(db: Session = Depends(get_db), search: str = "",  user_id: int = Depends(authenticate_user)):
         # notes = db.query(Product).filter(Product.name.contains(search)).limit(limit).offset(skip).all() : operation in query
         products = db.query(Product).filter(
             Product.name.contains(search)).all()
@@ -63,3 +67,34 @@ class ProductView:
         product_query.delete(synchronize_session=False)
         db.commit()
         return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+class ImageView:
+
+    @router.post("/product/upload/image/")
+    async def upload_image(file: UploadFile = File(...)):
+        """
+        Upload an image file to S3 bucket.
+        """
+        valid_extensions = ["png", "jpg", "jpeg"]
+        if (file.content_type).split("/")[-1] in valid_extensions:
+
+            # generate a unique key for the file
+            random_uuid = str(uuid.uuid4()) + "." + \
+                (file.content_type).split("/")[-1]
+            file_key = f"images/{str(date.today())}/{random_uuid}"
+
+            try:
+                # upload the file to S3
+                s3_client.upload_fileobj(file.file, "fastapi-images", file_key)
+            except Exception as e:
+                raise HTTPException(detail=str(
+                    e), status_code=status.HTTP_406_NOT_ACCEPTABLE)
+
+            # return the uploaded file URL
+            file_url = f"https://fastapi-images.s3.amazonaws.com/{file_key}"
+            return {"detail": "file uploaded successfully", "file_url": file_url}
+
+        else:
+            raise HTTPException(detail="Invalid image format. Only .png and .jpg files are allowed.",
+                                status_code=status.HTTP_406_NOT_ACCEPTABLE)

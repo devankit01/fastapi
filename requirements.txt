@@ -2,6 +2,9 @@ aioredis==2.0.1
 anyio==3.6.2
 async-timeout==4.0.2
 autopep8==2.0.2
+bcrypt==4.0.1
+boto3==1.26.132
+botocore==1.29.132
 cleo==1.0.0a4
 click==8.1.3
 crashtest==0.3.1
@@ -12,6 +15,7 @@ greenlet==2.0.2
 h11==0.14.0
 hiredis==2.1.0
 idna==3.4
+jmespath==1.0.1
 passlib==1.7.4
 pptree==3.1
 psycopg2-binary==2.9.6
@@ -19,12 +23,15 @@ pyasn1==0.5.0
 pycodestyle==2.10.0
 pydantic==1.10.2
 pylev==1.4.0
+python-dateutil==2.8.2
 python-dotenv==0.19.2
 python-jose==3.3.0
+python-multipart==0.0.6
 python-ulid==1.1.0
 redis==4.4.0
 redis-om==0.0.20
 rsa==4.9
+s3transfer==0.6.1
 six==1.16.0
 sniffio==1.3.0
 SQLAlchemy==1.4.45
@@ -33,4 +40,5 @@ tomli==2.0.1
 types-redis==4.3.21.7
 types-six==1.16.21.4
 typing-extensions==4.4.0
+urllib3==1.26.15
 uvicorn==0.20.0

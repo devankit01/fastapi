@@ -1,14 +1,16 @@
 from fastapi import Response, status, HTTPException, Depends, APIRouter
 from sqlalchemy.orm import Session
-from models import get_db
+from app.models import get_db
 from typing import List
-from schema.user import UserSchema, UserReadSchema, UserSignInSchema
-from models import User
-from utils.jwt import verify_password, get_hashed_password, create_access_token, create_refresh_token, ACCESS_TOKEN_EXPIRE_MINUTES
+from .schemas import UserSchema, UserReadSchema, UserSignInSchema
+from app.models import User
+from ...utils.jwt import verify_password, get_hashed_password, create_access_token, create_refresh_token, ACCESS_TOKEN_EXPIRE_MINUTES, authenticate_user
 import uuid
 from fastapi.responses import JSONResponse
 
 router = APIRouter()
+
+
 
 
 class UserView:
@@ -18,6 +20,7 @@ class UserView:
 
     @router.post("/user/signup", status_code=status.HTTP_201_CREATED, response_model=UserReadSchema)
     async def signup_user(payload: UserSchema, db: Session = Depends(get_db)):
+
         data = payload.dict().copy()  # copy data to overwrite
         data["password"] = get_hashed_password(
             data["password"])  # hash password
@@ -50,7 +53,6 @@ class UserView:
         # create refresh and access tokens
         access_token = create_access_token(user.id)
         refresh_token = create_refresh_token(user.id)
-
 
         response = {
             "id" : str(user.id),
