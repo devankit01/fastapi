@@ -34,6 +34,7 @@ class Product(Base):
     price = Column(Integer)
     stock = Column(Integer)
     sale = Column(Boolean, default=False)
+    image = Column(String, default="")
 
     __tablename__ = "product"
 

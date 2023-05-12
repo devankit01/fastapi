@@ -2,7 +2,6 @@ from passlib.context import CryptContext
 import os
 from datetime import datetime, timedelta
 from typing import Union, Any
-# from jose import jwt
 import jwt
 from fastapi import HTTPException, Security
 from fastapi.security import HTTPBearer
@@ -14,8 +13,7 @@ from fastapi import HTTPException, Depends
 ACCESS_TOKEN_EXPIRE_MINUTES = 30  # 30 minutes
 REFRESH_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 days
 ALGORITHM = "HS256"
-JWT_SECRET_KEY = os.environ['JWT_SECRET_KEY']     # should be kept secret
-# should be kept secret
+JWT_SECRET_KEY = os.environ['JWT_SECRET_KEY']     
 JWT_REFRESH_SECRET_KEY = os.environ['JWT_REFRESH_SECRET_KEY']
 
 password_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -32,8 +30,16 @@ def verify_password(password: str, hashed_pass: str) -> bool:
     """ 
     Verify password
     """
+    
     return password_context.verify(password, hashed_pass)
 
+def verify_refresh_token(token: str) :
+    """ 
+    Verify refresh token
+    """
+    refresh_token = jwt.decode(token, JWT_REFRESH_SECRET_KEY, ALGORITHM)
+    user_id = refresh_token["data"]
+    return user_id
 
 def create_access_token(subject: Union[str, Any]) -> str:
     """ 

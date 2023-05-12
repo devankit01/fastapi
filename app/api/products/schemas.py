@@ -8,6 +8,7 @@ class ProductSchema(BaseModel):
     price: int  # mandatory field
     stock: Optional[int] = 5  # default field
     sale: bool = False  # optional field
+    image: Optional[str] = ""
 
 
 class ProductReadSchema(ProductSchema):
@@ -22,3 +23,4 @@ class ProductUpdate(BaseModel):
     price: Optional[int]
     stock: Optional[int]
     sale: Optional[bool]
+    image : Optional[str]

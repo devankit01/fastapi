@@ -1,12 +1,11 @@
-from fastapi import Response, status, HTTPException, Depends, APIRouter
+from fastapi import Response, status, HTTPException, Depends, APIRouter, File, UploadFile
 from sqlalchemy.orm import Session
 from app.models import get_db
 from typing import List
 from .schemas import ProductReadSchema, ProductSchema, ProductUpdate
 from app.models import Product
-from fastapi import FastAPI, File, UploadFile
-from ...utils.s3 import s3_client
-from ...utils.jwt import authenticate_user
+from app.utils.s3 import s3_client
+from app.utils.jwt import authenticate_user
 from datetime import date
 import uuid
 
@@ -19,28 +18,31 @@ class ProductView:
     """
 
     @router.get("/products", response_model=List[ProductReadSchema])
-    async def get_products(db: Session = Depends(get_db), search: str = "",  user_id: int = Depends(authenticate_user)):
+    async def get_products(db: Session = Depends(get_db), search: str = "",  user_id: int = Depends(authenticate_user)): # get user_id from token
         # notes = db.query(Product).filter(Product.name.contains(search)).limit(limit).offset(skip).all() : operation in query
         products = db.query(Product).filter(
             Product.name.contains(search)).all()
         return products
 
+
     @router.post("/products", status_code=status.HTTP_201_CREATED)
-    async def create_product(payload: ProductSchema, db: Session = Depends(get_db)):
+    async def create_product(payload: ProductSchema, db: Session = Depends(get_db),  user_id: int = Depends(authenticate_user)):
         new_product = Product(**payload.dict())
         db.add(new_product)
         db.commit()
         db.refresh(new_product)
         return new_product
 
-    @router.get("/product/{id}")
-    async def get_product(id: uuid.UUID, db: Session = Depends(get_db)):
+
+    @router.get("/product")
+    async def get_product(id: uuid.UUID, db: Session = Depends(get_db),  user_id: int = Depends(authenticate_user)):
         product = db.query(Product).filter(
             Product.id == id).first()  # query to get single data
         return product
 
+
     @router.patch('/product/{id}')
-    async def update_note(id: uuid.UUID, payload: ProductUpdate, db: Session = Depends(get_db)):
+    async def update_product(id: uuid.UUID, payload: ProductUpdate, db: Session = Depends(get_db),  user_id: int = Depends(authenticate_user)):
         product_query = db.query(Product).filter(
             Product.id == id)  # query to get single data
         product = product_query.first()
@@ -55,8 +57,9 @@ class ProductView:
         db.refresh(product)
         return product
 
+
     @router.delete('/product/{id}')
-    async def delete_post(id: uuid.UUID, db: Session = Depends(get_db)):
+    async def delete_post(id: uuid.UUID, db: Session = Depends(get_db),  user_id: int = Depends(authenticate_user)):
         product_query = db.query(Product).filter(
             Product.id == id)  # query to get single data
         product = product_query.first()
@@ -72,7 +75,7 @@ class ProductView:
 class ImageView:
 
     @router.post("/product/upload/image/")
-    async def upload_image(file: UploadFile = File(...)):
+    async def upload_image(file: UploadFile = File(...),  user_id: int = Depends(authenticate_user)):
         """
         Upload an image file to S3 bucket.
         """
