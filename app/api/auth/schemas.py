@@ -29,3 +29,4 @@ class UserSignInSchema(BaseModel):
 
 class RefreshTokenSchema(BaseModel):
     refresh_token: str  # mandatory field
+    

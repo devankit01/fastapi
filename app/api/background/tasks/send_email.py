@@ -12,8 +12,8 @@ def send_email_to_users(emails=[]):
         # Set up the SMTP server
         smtp_server = "smtp.gmail.com"
         smtp_port = 587
-        sender_email = "ankit@clear.bio"
-        sender_password = os.environ.get("app_password")
+        sender_email = os.environ.get("EMAIL_USER_NAME")
+        sender_password = os.environ.get("EMAIL_USER_PASSWORD")
 
         # Set up the email message
         

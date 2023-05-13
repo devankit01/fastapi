@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional
 import uuid
-
+from ..auth.schemas import UserReadSchema
 
 class ProductSchema(BaseModel):
     name: str  # mandatory field
@@ -24,3 +24,16 @@ class ProductUpdate(BaseModel):
     stock: Optional[int]
     sale: Optional[bool]
     image : Optional[str]
+
+    
+
+class OrderSchema(BaseModel):
+    user_id : uuid.UUID
+    product_id : uuid.UUID
+    quantity: int
+
+               
+class OrderWithRelatedData(BaseModel):
+    pass
+
+    

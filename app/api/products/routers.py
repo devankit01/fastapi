@@ -2,15 +2,17 @@ from fastapi import Response, status, HTTPException, Depends, APIRouter, File, U
 from sqlalchemy.orm import Session
 from app.models import get_db
 from typing import List
-from .schemas import ProductReadSchema, ProductSchema, ProductUpdate
-from app.models import Product
+from .schemas import ProductReadSchema, ProductSchema, ProductUpdate, OrderSchema
+from app.models import Product, Order
 from app.utils.s3 import s3_client
 from app.utils.jwt import authenticate_user
 from datetime import date
-import uuid
+import uuid, os
+from .utils import get_order, get_user_orders
+
 
 router = APIRouter()
-
+AWS_BUCKET_NAME = os.environ.get("AWS_BUCKET_NAME")
 
 class ProductView:
     """
@@ -18,12 +20,12 @@ class ProductView:
     """
 
     @router.get("/products", response_model=List[ProductReadSchema])
-    async def get_products(db: Session = Depends(get_db), search: str = "",  user_id: int = Depends(authenticate_user)): # get user_id from token
+    # get user_id from token
+    async def get_products(db: Session = Depends(get_db), search: str = "",  user_id: int = Depends(authenticate_user)):
         # notes = db.query(Product).filter(Product.name.contains(search)).limit(limit).offset(skip).all() : operation in query
         products = db.query(Product).filter(
             Product.name.contains(search)).all()
         return products
-
 
     @router.post("/products", status_code=status.HTTP_201_CREATED)
     async def create_product(payload: ProductSchema, db: Session = Depends(get_db),  user_id: int = Depends(authenticate_user)):
@@ -33,13 +35,11 @@ class ProductView:
         db.refresh(new_product)
         return new_product
 
-
     @router.get("/product")
     async def get_product(id: uuid.UUID, db: Session = Depends(get_db),  user_id: int = Depends(authenticate_user)):
         product = db.query(Product).filter(
             Product.id == id).first()  # query to get single data
         return product
-
 
     @router.patch('/product/{id}')
     async def update_product(id: uuid.UUID, payload: ProductUpdate, db: Session = Depends(get_db),  user_id: int = Depends(authenticate_user)):
@@ -56,7 +56,6 @@ class ProductView:
         db.commit()
         db.refresh(product)
         return product
-
 
     @router.delete('/product/{id}')
     async def delete_post(id: uuid.UUID, db: Session = Depends(get_db),  user_id: int = Depends(authenticate_user)):
@@ -89,7 +88,7 @@ class ImageView:
 
             try:
                 # upload the file to S3
-                s3_client.upload_fileobj(file.file, "fastapi-images", file_key)
+                s3_client.upload_fileobj(file.file, AWS_BUCKET_NAME, file_key)
             except Exception as e:
                 raise HTTPException(detail=str(
                     e), status_code=status.HTTP_406_NOT_ACCEPTABLE)
@@ -101,3 +100,23 @@ class ImageView:
         else:
             raise HTTPException(detail="Invalid image format. Only .png and .jpg files are allowed.",
                                 status_code=status.HTTP_406_NOT_ACCEPTABLE)
+
+
+class OrderView:
+    @router.post("/order")
+    def create_order(payload: OrderSchema, db: Session = Depends(get_db),  user_id: int = Depends(authenticate_user)):
+        new_order = Order(**payload.dict())
+        db.add(new_order)
+        db.commit()
+        db.refresh(new_order)
+        return new_order
+
+    @router.get("/orders", )
+    def get_users_all_orders( id: uuid.UUID, db: Session = Depends(get_db), user_id: int = Depends(authenticate_user)):
+        order = get_user_orders(db, user_id=id)  # query to get all orders data
+        return order
+    
+    @router.get("/order", )
+    def get_single_order(id: uuid.UUID, db: Session = Depends(get_db),  user_id: int = Depends(authenticate_user)):
+        order = get_order(db, order_id=id)  # query to get single data
+        return order
